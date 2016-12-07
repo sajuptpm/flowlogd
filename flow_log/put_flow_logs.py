@@ -99,7 +99,7 @@ def write_to_dss(account_id,directory,file_name):
 
 def get_logs(account_id):
     end_time= datetime.datetime.now()
-    start_time= end_time - datetime.timedelta(minutes = 5)
+    start_time= end_time - datetime.timedelta(minutes = 40)
     directory= 'vpc-flow-log-'+account_id[20:]
     file_name= directory+'-'+start_time.strftime('%d_%m_%Y-%H_%M')
     start_time= start_time.strftime('%d-%m-%Y %H:%M:%S')

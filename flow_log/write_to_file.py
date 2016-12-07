@@ -48,8 +48,9 @@ def convert_to_now(time):
     now_time= 'now-%ss' % (delta)
     return now_time
 
-def write_log_to_file(start_time,end_time,directory,file_name,account_id,dirn,vn,n_try):
-    url = 'http://10.140.214.62:8081/analytics/query'
+def write_log_to_file(start_time,end_time,directory,file_name,account_id,dirn,vn,logs):
+    n_try= logs['n_try']
+    url = logs['url']
     data = field + ('"end_time": "%s" , "start_time": "%s", "dir": %s, "filter": [[{"name": '
             '"%s", "value": ".*%s.*", '
             '"op": 8}]] }') % (end_time, start_time, dirn, vn, account_id)
@@ -86,7 +87,7 @@ def get_log_in_time(start_time,end_time,directory,file_name,account_id,dirn,vn):
         temp1=temp
         temp = temp + datetime.timedelta(seconds = int(logs['time_delta']))
         total_seconds = (e_t - temp).total_seconds()
-        if write_log_to_file(convert_to_now(temp1.strftime('%d-%m-%Y %H:%M:%S')),convert_to_now(temp.strftime('%d-%m-%Y %H:%M:%S')),directory,file_name,account_id,0,vn,int(logs['n_try'])):
+        if write_log_to_file(convert_to_now(temp1.strftime('%d-%m-%Y %H:%M:%S')),convert_to_now(temp.strftime('%d-%m-%Y %H:%M:%S')),directory,file_name,account_id,0,vn,logs):
             if total_seconds > 1:
                 with open(directory+'/'+file_name, 'a') as outfile:
                     outfile.write(',')
