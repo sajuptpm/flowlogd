@@ -8,7 +8,7 @@ import logging
 ### In order to get_account_id() to work make sure you have atleast on account
 
 
-LOG_FILENAME = 'log_test.log'
+LOG_FILENAME = 'Flow_Logs.log'
 logging.basicConfig(filename=LOG_FILENAME,
                         level=logging.DEBUG,
                         )
@@ -25,7 +25,7 @@ def create_resource_based_policy(name,accounts, actions, jclient):
 
     policy_document = policy_document+'], \"effect\": \"allow\"}]}'
 
-    print jclient.iam.create_resource_based_policy(policy_document = policy_document)
+    logging.info( jclient.iam.create_resource_based_policy(policy_document = policy_document))
 
 
 def update_resource_based_policy(name,accounts, actions, jclient):
@@ -41,17 +41,11 @@ def update_resource_based_policy(name,accounts, actions, jclient):
     policy_document = policy_document[:-1]+'], \"effect\": \"allow\"}]}'
 
 
-    print policy_document
-    print jclient.iam.update_resource_based_policy(policy_document = policy_document, name=name)
+    logging.info( policy_document)
+    logging.info( jclient.iam.update_resource_based_policy(policy_document = policy_document, name=name))
 
 
     #jclient.iam.create_resource_based_policy
-
-
-def get_account_id(jclient):
-    resp = jclient.iam.list_users()
-    if resp['status'] == 200:
-        return resp['users'][0]['account_id']
 
 
 def attach_policy_to_resource(name,resources,jclient):
@@ -63,20 +57,8 @@ def attach_policy_to_resource(name,resources,jclient):
 
     resource_stat = resource_stat[:-1] + ']}'
 
-    print resource_stat
-    print jclient.iam.attach_policy_to_resource(policy_name=name,resource=resource_stat)
+    logging.info( resource_stat)
+    logging.info(jclient.iam.attach_policy_to_resource(policy_name=name,resource=resource_stat))
 
 
-if __name__ == '__main__':
-    date = '20161010'
-    env = 'stag'
-    name = 'log'
-    accounts = ['026892516833']
-    actions = ['jrn:jcs:dss:ListBucket']#, 'jrn:jcs:dss:ListObject'] 
-    resource = [{'service' : 'dss','account_id': get_account_id(), 'resource': 'Bucket:log'}]
-
-    #create_resource_based_policy(name,accounts,actions) 
-    #update_resource_based_policy(name,accounts,actions) 
-    #account_id =   get_account_id()   
-    #attach_policy_to_resource(name,resource)
 

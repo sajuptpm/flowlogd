@@ -16,30 +16,19 @@ import pytz
 import write_to_file as WF
 ### Usage info
 
-LOG_FILENAME = 'Flow_Log.log'
+LOG_FILENAME = 'Flow_Logs.log'
 logging.basicConfig(filename=LOG_FILENAME,
                         level=logging.DEBUG,
                         )
 
 
-def config_section_map(CONFIG, section):
-    dict1 = {}
-    options = CONFIG.options(section)
-    for option in options:
-        try:
-            dict1[option] = CONFIG.get(section, option)
-            if dict1[option] == -1 :
-                print "Wrong Option"
-        except:
-            dict1[option]  = None
-    return dict1
 
 def create_bucket(bucket, jclient):
     logging.info(jclient.dss.create_bucket(['create-bucket','--bucket', bucket]))
 
 def put_logs(directory,bucket, jclient,f):
     logging.info( jclient.dss.put_object(['put-object','--bucket', bucket
-                                              ,'--key', 'test/'+f
+                                              ,'--key', 'vpc_flow_logs/'+f
                                               ,'--body', directory+'/'+f]))
 
     logging.info( jclient.dss.list_objects(['list-objects','--bucket',bucket]))
@@ -55,7 +44,7 @@ def initiate_client(secret):
 
     return jclient
 
-def policy_update(config,secret,bucket_name,jclient):
+def policy_update(config,secret,bucket_name,jclient,dss_account_id):
     ''' Give full path of the config file.
         It should have time delt in days.
         Environment
@@ -69,7 +58,7 @@ def policy_update(config,secret,bucket_name,jclient):
     create_bucket(bucket_name,jclient)
 
 
-    account_id = '096143792974'
+    account_id = dss_account_id
     resources= []
     #if resource policy is changed
     for dict1 in config['resources']:
@@ -84,16 +73,16 @@ def policy_update(config,secret,bucket_name,jclient):
 def write_to_dss(account_id,directory,file_name):
     CONFIG = ConfigParser.ConfigParser()
     CONFIG.read('log_config.cfg')
-    logs = config_section_map(CONFIG, 'logs')
-    secret = config_section_map(CONFIG, 'secret')
-    bucket = config_section_map(CONFIG, 'bucket')
+    logs = WF.config_section_map(CONFIG, 'logs')
+    secret = WF.config_section_map(CONFIG, 'secret')
+    bucket = WF.config_section_map(CONFIG, 'bucket')
     bucket['actions'] = bucket['actions'].split(',')
     bucket['accounts'] = account_id[20:]
     bucket['resources'] = [json.loads(resource) for resource in bucket['resources'].split(',')]
     bucket_name=directory
     jclient = initiate_client(secret)
 
-    policy_update(bucket,secret,bucket_name,jclient)
+    policy_update(bucket,secret,bucket_name,jclient,logs['dss_account_id'])
     put_logs(directory,bucket_name,jclient,file_name)
     
 
@@ -116,5 +105,3 @@ def get_logs(account_id):
         outfile.write(']}')
     
     write_to_dss(account_id,directory,file_name)
-
-

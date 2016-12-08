@@ -4,7 +4,7 @@ import logging
 import ConfigParser
 #import put_flow_logs as pflow
 
-LOG_FILENAME = 'log_test.log'
+LOG_FILENAME = 'Flow_Logs.log'
 logging.basicConfig(filename=LOG_FILENAME,
                         level=logging.DEBUG,
                         )
