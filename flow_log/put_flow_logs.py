@@ -87,6 +87,7 @@ def write_to_dss(account_id,directory,file_name):
     
 
 def get_logs(account_id):
+
     end_time= datetime.datetime.now()
     start_time= end_time - datetime.timedelta(minutes = 40)
     directory= 'vpc-flow-log-'+account_id[20:]
@@ -105,3 +106,12 @@ def get_logs(account_id):
         outfile.write(']}')
     
     write_to_dss(account_id,directory,file_name)
+
+def get_log_enable_account_ids():
+
+    CONFIG = ConfigParser.ConfigParser()
+    CONFIG.read('/etc/vpc_flow_logs.cfg')
+    secret = WF.config_section_map(CONFIG, 'secret')
+    jclient = initiate_client(secret)
+    res = jclient.vpc.describe_flow_log_enable_accounts('describe-flow-log-enable-accounts')
+    return res['DescribeFlowLogEnableAccountsResponse']['accountIds']['item']
