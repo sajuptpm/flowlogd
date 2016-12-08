@@ -72,7 +72,7 @@ def policy_update(config,secret,bucket_name,jclient,dss_account_id):
 
 def write_to_dss(account_id,directory,file_name):
     CONFIG = ConfigParser.ConfigParser()
-    CONFIG.read('log_config.cfg')
+    CONFIG.read('/etc/vpc_flow_logs.cfg')
     logs = WF.config_section_map(CONFIG, 'logs')
     secret = WF.config_section_map(CONFIG, 'secret')
     bucket = WF.config_section_map(CONFIG, 'bucket')
