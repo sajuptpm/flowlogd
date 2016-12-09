@@ -5,7 +5,7 @@ import random
 import socket
 import zkcelery
 import ConfigParser
-from put_flow_log import get_logs, get_log_enable_account_ids
+from put_flow_logs import get_logs, get_log_enable_account_ids
 
 config = ConfigParser.ConfigParser()
 config.read('/etc/vpc_flow_logs.cfg')
