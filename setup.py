@@ -34,6 +34,6 @@ setuptools.setup(
     keywords='',
     platforms='any',
     url='https://github.com/JioCloudVPC/flowlogd',
-    data_files = [('/etc/flowlog', ['flowlogd/vpc_flow_logs.cfg'])]
+    #data_files = [('/etc/flowlog', ['flowlogd/vpc_flow_logs.cfg'])]
 )
 
