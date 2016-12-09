@@ -7,7 +7,3 @@ include requirements.txt
 
 recursive-include flowlogd *.py
 
-recursive-exclude docs/_build *
-recursive-exclude * __pycache__
-recursive-exclude * *.py[co]
-recursive-exclude * .*.sw[a-z]
