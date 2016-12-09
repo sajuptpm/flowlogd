@@ -23,10 +23,10 @@ logging.basicConfig(filename=LOG_FILENAME,
 
 
 
-def create_bucket(bucket, jclient):
+def create_bucket(bucket):
     logging.info(jclient.dss.create_bucket(['create-bucket','--bucket', bucket]))
 
-def put_logs(directory,bucket, jclient,f):
+def put_logs(directory,bucket,f):
     logging.info( jclient.dss.put_object(['put-object','--bucket', bucket
                                               ,'--key', 'vpc_flow_logs/'+f
                                               ,'--body', directory+'/'+f]))
@@ -44,7 +44,12 @@ def initiate_client(secret):
 
     return jclient
 
-def policy_update(config,secret,bucket_name,jclient,dss_account_id):
+CONFIG = ConfigParser.ConfigParser()
+CONFIG.read('/etc/vpc_flow_logs.cfg')
+secret = WF.config_section_map(CONFIG, 'secret')
+jclient = initiate_client(secret)
+
+def policy_update(config,bucket_name,dss_account_id):
     ''' Give full path of the config file.
         It should have time delt in days.
         Environment
@@ -55,7 +60,7 @@ def policy_update(config,secret,bucket_name,jclient,dss_account_id):
         accounts which should have those policy attached
     '''
 
-    create_bucket(bucket_name,jclient)
+    create_bucket(bucket_name)
 
 
     account_id = dss_account_id
@@ -74,16 +79,14 @@ def write_to_dss(account_id,directory,file_name):
     CONFIG = ConfigParser.ConfigParser()
     CONFIG.read('/etc/vpc_flow_logs.cfg')
     logs = WF.config_section_map(CONFIG, 'logs')
-    secret = WF.config_section_map(CONFIG, 'secret')
     bucket = WF.config_section_map(CONFIG, 'bucket')
     bucket['actions'] = bucket['actions'].split(',')
     bucket['accounts'] = account_id[20:]
     bucket['resources'] = [json.loads(resource) for resource in bucket['resources'].split(',')]
     bucket_name=directory
-    jclient = initiate_client(secret)
 
-    policy_update(bucket,secret,bucket_name,jclient,logs['dss_account_id'])
-    put_logs(directory,bucket_name,jclient,file_name)
+    policy_update(bucket,bucket_name,logs['dss_account_id'])
+    put_logs(directory,bucket_name,file_name)
     
 
 def get_logs(account_id):
@@ -109,9 +112,5 @@ def get_logs(account_id):
 
 def get_log_enable_account_ids():
 
-    CONFIG = ConfigParser.ConfigParser()
-    CONFIG.read('/etc/vpc_flow_logs.cfg')
-    secret = WF.config_section_map(CONFIG, 'secret')
-    jclient = initiate_client(secret)
     res = jclient.vpc.describe_flow_log_enable_accounts('describe-flow-log-enable-accounts')
     return res['DescribeFlowLogEnableAccountsResponse']['accountIds']['item']
