@@ -78,7 +78,7 @@ def write_log_to_file(start_time,end_time,directory,file_name,account_id,dirn,vn
 
 def get_log_in_time(start_time,end_time,directory,file_name,account_id,dirn,vn):
     CONFIG = ConfigParser.ConfigParser()
-    CONFIG.read('/etc/vpc_flow_logs.cfg')
+    CONFIG.read('/etc/flowlogd/vpc_flow_logs.cfg')
     logs = config_section_map(CONFIG, 'logs')
     s_t = datetime.datetime.strptime(start_time, '%d-%m-%Y %H:%M:%S')
     e_t = datetime.datetime.strptime(end_time, '%d-%m-%Y %H:%M:%S')

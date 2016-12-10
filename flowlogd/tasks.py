@@ -8,7 +8,7 @@ import ConfigParser
 from put_flow_logs import get_logs, get_log_enable_account_ids
 
 config = ConfigParser.ConfigParser()
-config.read('/etc/vpc_flow_logs.cfg')
+config.read('/etc/flowlogd/vpc_flow_logs.cfg')
 broker_url = config.get('rabbitmq', 'broker_url', 'amqp://rabbit:rabbit@127.0.0.1//')
 periodic_task_interval = config.get('task', 'periodic_task_interval', 300)
 

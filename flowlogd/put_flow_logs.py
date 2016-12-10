@@ -45,7 +45,7 @@ def initiate_client(secret):
     return jclient
 
 CONFIG = ConfigParser.ConfigParser()
-CONFIG.read('/etc/vpc_flow_logs.cfg')
+CONFIG.read('/etc/flowlogd/vpc_flow_logs.cfg')
 secret = WF.config_section_map(CONFIG, 'secret')
 jclient = initiate_client(secret)
 
@@ -77,7 +77,7 @@ def policy_update(config,bucket_name,dss_account_id):
 
 def write_to_dss(account_id,directory,file_name):
     CONFIG = ConfigParser.ConfigParser()
-    CONFIG.read('/etc/vpc_flow_logs.cfg')
+    CONFIG.read('/etc/flowlogd/vpc_flow_logs.cfg')
     logs = WF.config_section_map(CONFIG, 'logs')
     bucket = WF.config_section_map(CONFIG, 'bucket')
     bucket['actions'] = bucket['actions'].split(',')
