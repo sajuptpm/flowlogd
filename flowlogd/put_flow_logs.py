@@ -75,7 +75,7 @@ def policy_update(config,bucket_name,dss_account_id):
     CP.update_resource_based_policy(bucket_name,config['accounts'], config['actions'], jclient)
     CP.attach_policy_to_resource(bucket_name,resources,jclient)
 
-def write_to_dss(account_id,directory,file_name):
+def write_to_dss(account_id,directory,b_dir,file_name):
     CONFIG = ConfigParser.ConfigParser()
     CONFIG.read('/etc/flowlogd/vpc_flow_logs.cfg')
     logs = WF.config_section_map(CONFIG, 'logs')
@@ -83,7 +83,7 @@ def write_to_dss(account_id,directory,file_name):
     bucket['actions'] = bucket['actions'].split(',')
     bucket['accounts'] = account_id[20:]
     bucket['resources'] = [json.loads(resource) for resource in bucket['resources'].split(',')]
-    bucket_name=directory
+    bucket_name=b_dir
 
     policy_update(bucket,bucket_name,logs['dss_account_id'])
     put_logs(directory,bucket_name,file_name)
@@ -93,8 +93,9 @@ def get_logs(account_id):
 
     end_time= datetime.datetime.now()
     start_time= end_time - datetime.timedelta(minutes = 40)
-    directory= 'vpc-flow-log-'+account_id[20:]
-    file_name= directory+'-'+start_time.strftime('%d_%m_%Y-%H_%M')
+    base_directory= 'vpc-flow-log-'+account_id[20:]
+    directory = '/tmp/'+ base_directory
+    file_name= base_directory+'-'+start_time.strftime('%d_%m_%Y-%H_%M')
     start_time= start_time.strftime('%d-%m-%Y %H:%M:%S')
     end_time= end_time.strftime('%d-%m-%Y %H:%M:%S')
     if not os.path.exists(directory):
@@ -108,7 +109,7 @@ def get_logs(account_id):
     with open(directory+'/'+file_name, 'a') as outfile:
         outfile.write(']}')
     
-    write_to_dss(account_id,directory,file_name)
+    write_to_dss(account_id,directory,base_directory,file_name)
 
 def get_log_enable_account_ids():
 
