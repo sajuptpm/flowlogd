@@ -47,6 +47,7 @@ def initiate_client(secret):
 CONFIG = ConfigParser.ConfigParser()
 CONFIG.read('/etc/flowlogd/vpc_flow_logs.cfg')
 secret = WF.config_section_map(CONFIG, 'secret')
+logs = WF.config_section_map(CONFIG, 'logs')
 jclient = initiate_client(secret)
 
 def policy_update(config,bucket_name,dss_account_id):
@@ -90,9 +91,9 @@ def write_to_dss(account_id,directory,b_dir,file_name):
     
 
 def get_logs(account_id):
-
+    time_interval = logs['time_interval']
     end_time= datetime.datetime.now()
-    start_time= end_time - datetime.timedelta(minutes = 40)
+    start_time= end_time - datetime.timedelta(seconds = time_interval)
     base_directory= 'vpc-flow-log-'+account_id[20:]
     directory = '/tmp/'+ base_directory
     file_name= base_directory+'-'+start_time.strftime('%d_%m_%Y-%H_%M')
