@@ -16,7 +16,7 @@ import pytz
 import write_to_file as WF
 ### Usage info
 
-LOG_FILENAME = 'Flow_Logs.log'
+LOG_FILENAME = '/var/log/flowlogd/flowlog.log'
 logging.basicConfig(filename=LOG_FILENAME,
                         level=logging.DEBUG,
                         )
