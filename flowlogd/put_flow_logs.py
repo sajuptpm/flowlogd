@@ -38,7 +38,6 @@ def initiate_client(secret):
     ##### Change this stuff and make it dynamic
     jclient = client.Client(access_key = secret['access_key'], secret_key = secret['secret_key'],
                             vpc_url=secret['vpc_url'],
-                            compute_url=secret['compute_url'],
                             dss_url=secret['dss_url'],
                             iam_url=secret['iam_url'] )
 
@@ -93,7 +92,7 @@ def write_to_dss(account_id,directory,b_dir,file_name):
 def get_logs(account_id):
     time_interval = logs['time_interval']
     end_time= datetime.datetime.now()
-    start_time= end_time - datetime.timedelta(seconds = time_interval)
+    start_time= end_time - datetime.timedelta(seconds = int(time_interval))
     base_directory= 'vpc-flow-log-'+account_id[20:]
     directory = '/tmp/'+ base_directory
     file_name= base_directory+'-'+start_time.strftime('%d_%m_%Y-%H_%M')
