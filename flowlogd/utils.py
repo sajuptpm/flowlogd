@@ -15,7 +15,7 @@ def initialize_logger(log_file_name):
 
 
 LOG = None
-def get_logger()
+def get_logger():
     global LOG
     if not LOG:
         LOG = utils.initialize_logger(constants.LOG_FILENAME)

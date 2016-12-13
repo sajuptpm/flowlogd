@@ -77,12 +77,6 @@ def policy_update(config,bucket_name,dss_account_id):
     CP.attach_policy_to_resource(bucket_name,resources,jclient)
 
 def write_to_dss(account_id,directory,b_dir,file_name):
-<<<<<<< HEAD
-    CONFIG = ConfigParser.ConfigParser()
-    CONFIG.read(constants.CONFIG_FILENAME)
-=======
->>>>>>> 9348152b4a8fd4a8983f74603830c0df77e04574
-    logs = WF.config_section_map(CONFIG, 'logs')
     bucket = WF.config_section_map(CONFIG, 'bucket')
     bucket['actions'] = bucket['actions'].split(',')
     bucket['accounts'] = account_id[20:]
