@@ -24,12 +24,14 @@ def create_bucket(bucket):
 
 #put objects into the bucket
 def put_logs(directory,bucket,f):
+    LOG.info('put object %s into bucket %s' % (f,bucket))
     LOG.info( jclient.dss.put_object(['put-object','--bucket', bucket
                                               ,'--key', 'vpc_flow_logs/'+f
                                               ,'--body', directory+'/'+f]))
 
 
 def initiate_client(secret):
+    LOG.info('initializing jcsclient')
     ##### Change this stuff and make it dynamic
     jclient = client.Client(access_key = secret['access_key'], secret_key = secret['secret_key'],
                             vpc_url=secret['vpc_url'],
@@ -58,6 +60,7 @@ def policy_update(config,bucket_name,dss_account_id):
         accounts which should have those policy attached
     '''
 
+    LOG.info('creating bucket %s' % bucket)
     create_bucket(bucket_name)
 
 
@@ -93,8 +96,11 @@ def get_logs(account_id):
     file_name= base_directory+'-'+start_time.strftime('%d_%m_%Y-%H_%M')
     start_time= start_time.strftime('%d-%m-%Y %H:%M:%S')
     end_time= end_time.strftime('%d-%m-%Y %H:%M:%S')
+
+    LOG.info('account id: %s start_time: %s end_time: %s' % (account_id,start_time,end_time))
     if not os.path.exists(directory):
         os.makedirs(directory)
+        LOG.info('creating directory %s' % directory)
     #below code will create the file and append the output such that json property will not be destroyed
 
     with open(directory+'/'+file_name, 'a') as outfile:
