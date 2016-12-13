@@ -26,6 +26,8 @@ def flow_log_periodic_task(self):
             for acc_id in acc_ids:
                 process_flowlog(acc_id)
             LOG.info("Submitted tasks to collect flowlog for accounts")
+        else:
+            LOG.info("Periodic task already running on another node")
 
 @app.task(base=zkcelery.LockTask, bind=True)
 def process_flowlog(self, acc_id):
@@ -34,6 +36,8 @@ def process_flowlog(self, acc_id):
             LOG.info("Collecting flowlog for account:{acc_id}".format(acc_id=acc_id))
             get_logs(acc_id)
             LOG.info("Collected flowlog for account:{acc_id}".format(acc_id=acc_id))
+        else:
+            LOG.info("Task for account:{acc_id} already running on another node".format(acc_id=acc_id))
 
 @app.on_after_configure.connect
 def setup_periodic_tasks(sender, **kwargs):
