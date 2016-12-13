@@ -1,5 +1,6 @@
 import celery
 from celery import Celery
+from celery import group
 import time
 import random
 import socket
@@ -21,11 +22,17 @@ app = Celery('tasks', backend='rpc://', broker=broker_url)
 def flow_log_periodic_task(self):
     with self.lock() as lock:
         if lock:
+            task_list = []
             LOG.info("Submitting tasks to collect flowlog for accounts")
             acc_ids = get_log_enable_account_ids()
             for acc_id in acc_ids:
-                process_flowlog(acc_id)
+                task_list.append(process_flowlog.s(acc_id))
             LOG.info("Submitted tasks to collect flowlog for accounts")
+            job = group(task_list)
+            result = job.apply_async()
+            while not result.successful():
+                LOG.info("Periodic task is waiting for subtasks to finish")
+                time.sleep(5)
         else:
             LOG.info("Periodic task already running on another node")
 

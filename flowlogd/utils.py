@@ -19,4 +19,4 @@ def get_logger():
     global LOG
     if not LOG:
         LOG = initialize_logger(constants.LOG_FILENAME)
-    return LOG    
+    return LOG
