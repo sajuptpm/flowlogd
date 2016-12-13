@@ -2,10 +2,10 @@ import datetime,pytz
 import requests
 import logging
 import ConfigParser
+import constants
 #import put_flow_logs as pflow
 
-LOG_FILENAME = '/var/log/flowlogd/flowlog.log'
-logging.basicConfig(filename=LOG_FILENAME,
+logging.basicConfig(filename=constants.LOG_FILENAME,
                         level=logging.DEBUG,
                         )
 
@@ -78,7 +78,7 @@ def write_log_to_file(start_time,end_time,directory,file_name,account_id,dirn,vn
 
 def get_log_in_time(start_time,end_time,directory,file_name,account_id,dirn,vn):
     CONFIG = ConfigParser.ConfigParser()
-    CONFIG.read('/etc/flowlogd/vpc_flow_logs.cfg')
+    CONFIG.read(constants.CONFIG_FILENAME)
     logs = config_section_map(CONFIG, 'logs')
     s_t = datetime.datetime.strptime(start_time, '%d-%m-%Y %H:%M:%S')
     e_t = datetime.datetime.strptime(end_time, '%d-%m-%Y %H:%M:%S')

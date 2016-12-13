@@ -3,13 +3,13 @@ import sys
 import os
 #from vpctools import vpc_functions as VF
 import logging
+import constants
 ### Usage info
 ### This file is helpful in creating a new bucket and giving it cross account permission
 ### In order to get_account_id() to work make sure you have atleast on account
 
 
-LOG_FILENAME = '/var/log/flowlogd/flowlog.log'
-logging.basicConfig(filename=LOG_FILENAME,
+logging.basicConfig(filename=constants.LOG_FILENAME,
                         level=logging.DEBUG,
                         )
 

@@ -14,14 +14,12 @@ import pdb
 import datetime
 import pytz
 import write_to_file as WF
+import constants
 ### Usage info
 
-LOG_FILENAME = '/var/log/flowlogd/flowlog.log'
-logging.basicConfig(filename=LOG_FILENAME,
+logging.basicConfig(filename=constants.LOG_FILENAME,
                         level=logging.DEBUG,
                         )
-
-
 
 def create_bucket(bucket):
     logging.info(jclient.dss.create_bucket(['create-bucket','--bucket', bucket]))
@@ -44,7 +42,7 @@ def initiate_client(secret):
     return jclient
 
 CONFIG = ConfigParser.ConfigParser()
-CONFIG.read('/etc/flowlogd/vpc_flow_logs.cfg')
+CONFIG.read(constants.CONFIG_FILENAME)
 secret = WF.config_section_map(CONFIG, 'secret')
 logs = WF.config_section_map(CONFIG, 'logs')
 jclient = initiate_client(secret)
@@ -77,7 +75,7 @@ def policy_update(config,bucket_name,dss_account_id):
 
 def write_to_dss(account_id,directory,b_dir,file_name):
     CONFIG = ConfigParser.ConfigParser()
-    CONFIG.read('/etc/flowlogd/vpc_flow_logs.cfg')
+    CONFIG.read(constants.CONFIG_FILENAME)
     logs = WF.config_section_map(CONFIG, 'logs')
     bucket = WF.config_section_map(CONFIG, 'bucket')
     bucket['actions'] = bucket['actions'].split(',')
