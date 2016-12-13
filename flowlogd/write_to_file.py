@@ -1,13 +1,10 @@
 import datetime,pytz
 import requests
-import logging
 import ConfigParser
 import constants
+import utils
 #import put_flow_logs as pflow
-
-logging.basicConfig(filename=constants.LOG_FILENAME,
-                        level=logging.DEBUG,
-                        )
+LOG = utils.get_logger()
 
 field = ('{"limit": 100000, "select_fields": ['
            '"sourcevn", "sourceip", "destvn", "destip", "protocol", '
@@ -57,7 +54,7 @@ def write_log_to_file(start_time,end_time,directory,file_name,account_id,dirn,vn
     data = field + ('"end_time": "%s" , "start_time": "%s", "dir": %s, "filter": [[{"name": '
             '"%s", "value": ".*%s.*", '
             '"op": 8}]] }') % (end_time, start_time, dirn, vn, account_id)
-    logging.info(data)
+    LOG.info(data)
     count=0
     while True:
         try:
@@ -68,7 +65,7 @@ def write_log_to_file(start_time,end_time,directory,file_name,account_id,dirn,vn
         value=req.text
         if len(value) <= 3 and count < n_try:
             count = count+1
-            logging.info('error no of try :%s \n' % count)
+            LOG.info('error no of try :%s \n' % count)
             continue
         elif count >= n_try:
             return False

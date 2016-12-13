@@ -9,25 +9,22 @@ import json
 import getopt
 import urllib2
 import requests
-import logging
 import pdb
 import datetime
 import pytz
 import write_to_file as WF
 import constants
+import utils
 ### Usage info
-
-logging.basicConfig(filename=constants.LOG_FILENAME,
-                        level=logging.DEBUG,
-                        )
+LOG = utils.get_logger()
 
 # create bucket
 def create_bucket(bucket):
-    logging.info(jclient.dss.create_bucket(['create-bucket','--bucket', bucket]))
+    LOG.info(jclient.dss.create_bucket(['create-bucket','--bucket', bucket]))
 
 #put objects into the bucket
 def put_logs(directory,bucket,f):
-    logging.info( jclient.dss.put_object(['put-object','--bucket', bucket
+    LOG.info( jclient.dss.put_object(['put-object','--bucket', bucket
                                               ,'--key', 'vpc_flow_logs/'+f
                                               ,'--body', directory+'/'+f]))
 

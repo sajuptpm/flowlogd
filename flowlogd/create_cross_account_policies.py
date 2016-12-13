@@ -2,16 +2,12 @@ from jcsclient import client
 import sys
 import os
 #from vpctools import vpc_functions as VF
-import logging
+import utils
 import constants
 ### Usage info
 ### This file is helpful in creating a new bucket and giving it cross account permission
 ### In order to get_account_id() to work make sure you have atleast on account
-
-
-logging.basicConfig(filename=constants.LOG_FILENAME,
-                        level=logging.DEBUG,
-                        )
+LOG = utils.get_logger()
 
 def create_resource_based_policy(name,accounts, actions, jclient):
     policy_document = '{\"name\": \"'+name+'\",\"statement\": [{\"action\": ['
@@ -25,7 +21,7 @@ def create_resource_based_policy(name,accounts, actions, jclient):
 
     policy_document = policy_document+'], \"effect\": \"allow\"}]}'
 
-    logging.info( jclient.iam.create_resource_based_policy(policy_document = policy_document))
+    LOG.info( jclient.iam.create_resource_based_policy(policy_document = policy_document))
 
 
 def update_resource_based_policy(name,accounts, actions, jclient):
@@ -40,8 +36,8 @@ def update_resource_based_policy(name,accounts, actions, jclient):
     policy_document = policy_document[:-1]+'], \"effect\": \"allow\"}]}'
 
 
-    logging.info( policy_document)
-    logging.info( jclient.iam.update_resource_based_policy(policy_document = policy_document, name=name))
+    LOG.info( policy_document)
+    LOG.info( jclient.iam.update_resource_based_policy(policy_document = policy_document, name=name))
 
 
 
@@ -55,8 +51,8 @@ def attach_policy_to_resource(name,resources,jclient):
 
     resource_stat = resource_stat[:-1] + ']}'
 
-    logging.info( resource_stat)
-    logging.info(jclient.iam.attach_policy_to_resource(policy_name=name,resource=resource_stat))
+    LOG.info( resource_stat)
+    LOG.info(jclient.iam.attach_policy_to_resource(policy_name=name,resource=resource_stat))
 
 
 
