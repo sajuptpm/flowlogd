@@ -2,7 +2,6 @@ import datetime,pytz
 import requests
 import logging
 import ConfigParser
-#import put_flow_logs as pflow
 
 LOG_FILENAME = '/var/log/flowlogd/flowlog.log'
 logging.basicConfig(filename=LOG_FILENAME,
@@ -38,6 +37,7 @@ def convert_to_now(time):
     current_time= datetime.datetime.now()
     t_time= datetime.datetime.strptime(time, '%d-%m-%Y %H:%M:%S')
     '''
+    # this code for converting IST to UCT
     local = pytz.timezone ("Asia/Kolkata")
     local_dt = local.localize(t_time, is_dst=None)
     utc_dt = local_dt.astimezone (pytz.utc)
@@ -48,6 +48,8 @@ def convert_to_now(time):
     now_time= 'now-%ss' % (delta)
     return now_time
 
+
+#this function will query the log from contrail and if it failed it will  retry till n_try.
 def write_log_to_file(start_time,end_time,directory,file_name,account_id,dirn,vn,logs):
     n_try= logs['n_try']
     url = logs['url']
@@ -65,7 +67,7 @@ def write_log_to_file(start_time,end_time,directory,file_name,account_id,dirn,vn
         value=req.text
         if len(value) <= 3 and count < n_try:
             count = count+1
-            logging.info('error **********\n')
+            logging.info('error no of try :%s \n' % count)
             continue
         elif count >= n_try:
             return False
@@ -75,7 +77,8 @@ def write_log_to_file(start_time,end_time,directory,file_name,account_id,dirn,vn
             return True
 
 
-
+#This function will devide the query on the basis of time_delta defined in config file
+# and call write_log_to_file to get the query and write it to the file
 def get_log_in_time(start_time,end_time,directory,file_name,account_id,dirn,vn):
     CONFIG = ConfigParser.ConfigParser()
     CONFIG.read('/etc/flowlogd/vpc_flow_logs.cfg')

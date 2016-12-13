@@ -22,16 +22,15 @@ logging.basicConfig(filename=LOG_FILENAME,
                         )
 
 
-
+# create bucket
 def create_bucket(bucket):
     logging.info(jclient.dss.create_bucket(['create-bucket','--bucket', bucket]))
 
+#put objects into the bucket
 def put_logs(directory,bucket,f):
     logging.info( jclient.dss.put_object(['put-object','--bucket', bucket
                                               ,'--key', 'vpc_flow_logs/'+f
                                               ,'--body', directory+'/'+f]))
-
-    logging.info( jclient.dss.list_objects(['list-objects','--bucket',bucket]))
 
 
 def initiate_client(secret):
@@ -43,11 +42,14 @@ def initiate_client(secret):
 
     return jclient
 
+#global declaration of config file
 CONFIG = ConfigParser.ConfigParser()
 CONFIG.read('/etc/flowlogd/vpc_flow_logs.cfg')
 secret = WF.config_section_map(CONFIG, 'secret')
 logs = WF.config_section_map(CONFIG, 'logs')
 jclient = initiate_client(secret)
+
+#creating bucket and cross account policy 
 
 def policy_update(config,bucket_name,dss_account_id):
     ''' Give full path of the config file.
@@ -65,19 +67,17 @@ def policy_update(config,bucket_name,dss_account_id):
 
     account_id = dss_account_id
     resources= []
-    #if resource policy is changed
     for dict1 in config['resources']:
         dict1['account_id']= account_id
         dict1['resource']= 'Bucket:'+bucket_name
         resources.append(dict1)
-
+  
+    #creating cross account policy
     CP.create_resource_based_policy(bucket_name,[], [], jclient)
     CP.update_resource_based_policy(bucket_name,config['accounts'], config['actions'], jclient)
     CP.attach_policy_to_resource(bucket_name,resources,jclient)
 
 def write_to_dss(account_id,directory,b_dir,file_name):
-    CONFIG = ConfigParser.ConfigParser()
-    CONFIG.read('/etc/flowlogd/vpc_flow_logs.cfg')
     logs = WF.config_section_map(CONFIG, 'logs')
     bucket = WF.config_section_map(CONFIG, 'bucket')
     bucket['actions'] = bucket['actions'].split(',')
@@ -100,6 +100,8 @@ def get_logs(account_id):
     end_time= end_time.strftime('%d-%m-%Y %H:%M:%S')
     if not os.path.exists(directory):
         os.makedirs(directory)
+    #below code will create the file and append the output such that json property will not be destroyed
+
     with open(directory+'/'+file_name, 'a') as outfile:
         outfile.write('{ "log_data" : [')
     if WF.get_log_in_time(start_time,end_time,directory,file_name,account_id,0,'destvn'):
@@ -109,6 +111,7 @@ def get_logs(account_id):
     with open(directory+'/'+file_name, 'a') as outfile:
         outfile.write(']}')
     
+    # create bucket and cross account policy
     write_to_dss(account_id,directory,base_directory,file_name)
 
 def get_log_enable_account_ids():

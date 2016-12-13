@@ -35,7 +35,6 @@ def update_resource_based_policy(name,accounts, actions, jclient):
     policy_document = policy_document[:-1] + '], \"principle\": ['
 
 
-    #for account in accounts:
     policy_document = policy_document + '\"jrn:jcs:iam:'+accounts+':User:*\",'
 
     policy_document = policy_document[:-1]+'], \"effect\": \"allow\"}]}'
@@ -45,7 +44,6 @@ def update_resource_based_policy(name,accounts, actions, jclient):
     logging.info( jclient.iam.update_resource_based_policy(policy_document = policy_document, name=name))
 
 
-    #jclient.iam.create_resource_based_policy
 
 
 def attach_policy_to_resource(name,resources,jclient):
