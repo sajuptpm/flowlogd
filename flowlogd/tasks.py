@@ -22,17 +22,12 @@ app = Celery('tasks', backend='rpc://', broker=broker_url)
 def flow_log_periodic_task(self):
     with self.lock() as lock:
         if lock:
-            task_list = []
             LOG.info("Submitting tasks to collect flowlog for accounts")
             acc_ids = get_log_enable_account_ids()
             for acc_id in acc_ids:
-                task_list.append(process_flowlog.s(acc_id))
+                process_flowlog.apply_async(args=[acc_id])
             LOG.info("Submitted tasks to collect flowlog for accounts")
-            job = group(task_list)
-            result = job.apply_async()
-            while not result.successful():
-                LOG.info("Periodic task is waiting for subtasks to finish")
-                time.sleep(5)
+            time.sleep(120)#To avoid periodic task overlap
         else:
             LOG.info("Periodic task already running on another node")
 
