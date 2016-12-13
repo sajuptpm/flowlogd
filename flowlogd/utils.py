@@ -18,5 +18,5 @@ LOG = None
 def get_logger():
     global LOG
     if not LOG:
-        LOG = utils.initialize_logger(constants.LOG_FILENAME)
+        LOG = initialize_logger(constants.LOG_FILENAME)
     return LOG    

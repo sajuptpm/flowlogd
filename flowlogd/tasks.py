@@ -28,7 +28,7 @@ def flow_log_periodic_task(self):
             LOG.info("Submitted tasks to collect flowlog for accounts")
 
 @app.task(base=zkcelery.LockTask, bind=True)
-def process_flowlog(acc_id):
+def process_flowlog(self, acc_id):
     with self.lock(acc_id) as lock:
         if lock:
             LOG.info("Collecting flowlog for account:{acc_id}".format(acc_id=acc_id))
