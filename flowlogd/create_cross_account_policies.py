@@ -8,7 +8,7 @@ import logging
 ### In order to get_account_id() to work make sure you have atleast on account
 
 
-LOG_FILENAME = 'Flow_Logs.log'
+LOG_FILENAME = '/var/log/flowlogd/flowlog.log'
 logging.basicConfig(filename=LOG_FILENAME,
                         level=logging.DEBUG,
                         )
