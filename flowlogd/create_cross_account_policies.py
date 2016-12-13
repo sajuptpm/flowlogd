@@ -50,9 +50,9 @@ def attach_policy_to_resource(name,resources,jclient):
         resource_stat = resource_stat + '\"jrn:jcs:' + resource['service'] +':' + resource['account_id']+':'+ resource['resource']+'\",'
 
     resource_stat = resource_stat[:-1] + ']}'
-
     LOG.info( resource_stat)
     LOG.info(jclient.iam.attach_policy_to_resource(policy_name=name,resource=resource_stat))
+    LOG.info('attached resource based policy %s' % name)
 
 
 
