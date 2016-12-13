@@ -1,6 +1,5 @@
 import logging
 import logging.handlers
-import ConfigParser
 import constants
 
 def initialize_logger(log_file_name):
@@ -19,8 +18,5 @@ LOG = None
 def get_logger()
     global LOG
     if not LOG:
-        config = ConfigParser.ConfigParser()
-        config.read(constants.CONFIG_FILENAME)
-        log_file = config.get('default', 'log_file', constants.LOG_FILENAME)
-        LOG = utils.initialize_logger(log_file)
+        LOG = utils.initialize_logger(constants.LOG_FILENAME)
     return LOG    
