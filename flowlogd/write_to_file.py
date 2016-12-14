@@ -10,8 +10,8 @@ field = ('{"limit": 100000, "select_fields": ['
            '"sourcevn", "sourceip", "destvn", "destip", "protocol", '
            '"sport", "dport",  "direction_ing", "setup_time", '
            '"teardown_time","agg-packets", "agg-bytes", "action", '
-           '"sg_rule_uuid", "nw_ace_uuid",  "underlay_proto", '
-           '"underlay_source_port","UuidKey"],'
+           '"sg_rule_uuid",  "underlay_proto", '
+           '"underlay_source_port"],'
            '"table": "FlowRecordTable",')
 
 
@@ -54,7 +54,6 @@ def write_log_to_file(start_time,end_time,directory,file_name,account_id,dirn,vn
     data = field + ('"end_time": "%s" , "start_time": "%s", "dir": %s, "filter": [[{"name": '
             '"%s", "value": ".*%s.*", '
             '"op": 8}]] }') % (end_time, start_time, dirn, vn, account_id)
-    LOG.info(data)
     count=0
     while True:
         try:
