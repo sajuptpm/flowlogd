@@ -64,12 +64,12 @@ def write_log_to_file(start_time,end_time,directory,file_name,account_id,dirn,vn
         value=req.text
         if len(value) <= 3 and count < n_try:
             count = count+1
-            LOG.info('query fail for start_time: %s end_time: %s  try count: %s ' % (start_time,end_time,count))
+            LOG.info('query fail for start_time: %s end_time: %s direction: %s try_count: %s ' % (start_time,end_time,dirn,count))
             continue
         elif count >= n_try:
             return False
         else:
-            LOG.info('query successfull for start_time: %s end_time: %s ' % (start_time,end_time))
+            LOG.info('query successfull for start_time: %s end_time: %s direction: %s' % (start_time,end_time,dirn))
             with open(directory+'/'+file_name, 'a') as outfile:
                 outfile.write(value)
             return True
@@ -88,7 +88,7 @@ def get_log_in_time(start_time,end_time,directory,file_name,account_id,dirn,vn):
         temp1=temp
         temp = temp + datetime.timedelta(seconds = int(logs['time_delta']))
         total_seconds = (e_t - temp).total_seconds()
-	LOG.info('query logs for start_time: %s end_time: %s' % (temp1,temp))
+	LOG.info('query logs for start_time: %s end_time: %s direction: %s' % (temp1,temp,dirn))
         if write_log_to_file(convert_to_now(temp1.strftime('%d-%m-%Y %H:%M:%S')),convert_to_now(temp.strftime('%d-%m-%Y %H:%M:%S')),directory,file_name,account_id,0,vn,logs):
             if total_seconds > 1:
                 with open(directory+'/'+file_name, 'a') as outfile:
