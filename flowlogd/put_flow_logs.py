@@ -116,6 +116,8 @@ def get_logs(account_id):
     
     # create bucket and cross account policy
     write_to_dss(account_id,directory,base_directory,file_name)
+    os.remove(directory+'/'+file_name)
+    LOG.info('Successfully wrinten logs for account_id: %s start_time: %s and end_time: %s' % (account_id,start_time,end_time))
 
 def get_log_enable_account_ids():
 
