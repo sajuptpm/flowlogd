@@ -1,2 +1,2 @@
-CONFIG_FILENAME = '/etc/flowlogd/vpc_flow_logs.cfg'
+CONFIG_FILENAME = '/etc/flowlogd/flowlogd.cfg'
 LOG_FILENAME = '/var/log/flowlogd/flowlog.log'
