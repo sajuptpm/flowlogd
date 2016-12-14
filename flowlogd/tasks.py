@@ -27,7 +27,7 @@ def flow_log_periodic_task(self):
             for acc_id in acc_ids:
                 process_flowlog.apply_async(args=[acc_id])
             LOG.info("Submitted tasks to collect flowlog for accounts")
-            time.sleep(120)#To avoid periodic task overlap
+            time.sleep(periodic_task_interval)#To avoid periodic task overlap
         else:
             LOG.info("Periodic task already running on another node")
 
