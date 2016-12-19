@@ -54,48 +54,52 @@ class FlowlogTask(zkcelery.LockTask):
                 client.close()
 
 
+def get_next_start_time(node_data):
+    if node_data and isinstance(node_data, tuple):
+        data = node_data[0]
+        if data:
+            try:
+                ldata = json.loads(data)
+            except Exception as ex:
+                LOG.error(ex)
+                raise ex
+            if ldata and isinstance(ldata, dict):
+                return ldata.get('end_time')
+
+
 @app.task(base=FlowlogTask, bind=True)
 def flow_log_periodic_task(self):
     with self.lock() as lock:
-        if lock:
+        if not lock:
+            LOG.info("Periodic task already running on another node")
+        else:
             LOG.info("Submitting tasks to collect flowlog for accounts")
             acc_ids = get_log_enable_account_ids()
             for acc_id in acc_ids:
                 start_time = None
                 path = constants.ZK_FLOWLOG_PATH.format(acc_id=acc_id)
                 node_data = self.get_or_create_node(path, makepath=True)
-                if node_data and isinstance(node_data, tuple):
-                    data = node_data[0]
-                    if data:
-                        try:
-                            ldata = json.loads(data)
-                        except Exception as ex:
-                            LOG.error(ex)
-                            raise ex
-                        if ldata and isinstance(ldata, dict):
-                            start_time = ldata.get('end_time')
+                start_time = get_next_start_time(node_data)
                 process_flowlog.apply_async(args=[acc_id],
                                             kwargs={'start_time': start_time})
                 LOG.info("Submitted task to collect flowlog for account:{acc_id}, start_time:{start_time}".\
                     format(acc_id=acc_id, start_time=start_time))
             LOG.info("Submitted tasks to collect flowlog for accounts")
             time.sleep(periodic_task_interval)#To avoid periodic task overlap
-        else:
-            LOG.info("Periodic task already running on another node")
 
 
 @app.task(base=FlowlogTask, bind=True)
 def process_flowlog(self, acc_id, start_time=None):
     with self.lock(acc_id) as lock:
-        if lock:
+        if not lock:
+            LOG.info("Task for account:{acc_id} already running on another node".format(acc_id=acc_id))
+        else:
             LOG.info("Collecting flowlog for account:{acc_id}".format(acc_id=acc_id))
             end_time = get_logs(acc_id)
             path = constants.ZK_FLOWLOG_PATH.format(acc_id=acc_id)
             node_data = json.dumps({'end_time':end_time})
             self.set_value(path, node_data)
             LOG.info("Collected flowlog for account:{acc_id}".format(acc_id=acc_id))
-        else:
-            LOG.info("Task for account:{acc_id} already running on another node".format(acc_id=acc_id))
 
 
 @app.on_after_configure.connect
