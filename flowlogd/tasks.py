@@ -66,9 +66,14 @@ def flow_log_periodic_task(self):
                 node_data = self.get_or_create_node(path, makepath=True)
                 if node_data and isinstance(node_data, tuple):
                     data = node_data[0]
-                    data = json.loads(data)
-                    if data and isinstance(data, dict):
-                        start_time = data.get('end_time')
+                    if data:
+                        try:
+                            ldata = json.loads(data)
+                        except Exception as ex:
+                            LOG.error(ex)
+                            raise ex
+                        if ldata and isinstance(ldata, dict):
+                            start_time = ldata.get('end_time')
                 process_flowlog.apply_async(args=[acc_id],
                                             kwargs={'start_time': start_time})
                 LOG.info("Submitted task to collect flowlog for account:{acc_id}, start_time:{start_time}".\
