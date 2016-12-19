@@ -86,7 +86,7 @@ def process_flowlog(self, acc_id, start_time=None):
             LOG.info("Collecting flowlog for account:{acc_id}".format(acc_id=acc_id))
             end_time = get_logs(acc_id)
             path = constants.ZK_FLOWLOG_PATH.format(acc_id=acc_id)
-            node_data = json.dumps({'end_time':'19-12-2016 14:48:58'})
+            node_data = json.dumps({'end_time':end_time})
             self.set_value(path, node_data)
             LOG.info("Collected flowlog for account:{acc_id}".format(acc_id=acc_id))
         else:
