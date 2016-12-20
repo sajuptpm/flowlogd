@@ -15,7 +15,7 @@ config.read(constants.CONFIG_FILENAME)
 broker_url = config.get('rabbitmq', 'broker_url',
                         'amqp://rabbit:rabbit@127.0.0.1//')
 periodic_task_interval = int(config.get('task', 'periodic_task_interval', 300))
-zookeeper_hosts = int(config.get('zookeeper', 'hosts', 'localhost:2181'))
+zookeeper_hosts = config.get('zookeeper', 'hosts', 'localhost:2181')
 
 app = Celery('tasks', backend='rpc://', broker=broker_url)
 app.conf.ZOOKEEPER_HOSTS = zookeeper_hosts
