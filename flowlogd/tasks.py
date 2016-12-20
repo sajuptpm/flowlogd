@@ -78,8 +78,10 @@ def can_run_periodic_task(node_data):
             start_time = datetime.strptime(ptask_start_time,
                                            constants.DATETIME_FORMAT)
             if not datetime.now() >= start_time:
-                LOG.info("Periodic task already finished by node:{updated_by}, next start time is:{ptask_start_time}".\
-                         format(updated_by=updated_by, ptask_start_time=ptask_start_time))
+                LOG.info('Periodic task already finished by node:{updated_by},'
+                         'next start time is:{ptask_start_time}'.format(
+                            updated_by=updated_by,
+                            ptask_start_time=ptask_start_time))
                 return False
     return True
 
@@ -92,8 +94,11 @@ def submit_process_flowlog_task(acc_id, node_data):
         updated_by = node_data.get('updated_by')
     process_flowlog.apply_async(args=[acc_id],
                                 kwargs={'start_time': start_time})
-    LOG.info("Submitted task to collect flowlog for account:{acc_id}, start_time:{start_time}, last updated by node:{updated_by}".\
-             format(acc_id=acc_id, start_time=start_time, updated_by=updated_by))
+    LOG.info('Submitted task to collect flowlog for account:{acc_id},'
+             ' start_time:{start_time},'
+             ' last updated by node:{updated_by}'.format(
+                acc_id=acc_id, start_time=start_time,
+                updated_by=updated_by))
 
 
 @app.task(base=FlowlogTask, bind=True)
@@ -119,23 +124,28 @@ def flow_log_periodic_task(self):
             node_data = json.dumps({'next_start_time': next_start_time_str,
                                     'updated_by': socket.gethostname()})
             self.set_value(constants.ZK_PTASK_PATH, node_data)
-            LOG.info("Submitted tasks to collect flowlog for accounts, next start time of periodic task is:{next_start_time_str}".\
-                     format(next_start_time_str=next_start_time_str))
+            LOG.info('Submitted tasks to collect flowlog for accounts,'
+                     ' next start time of periodic'
+                     ' task is:{next_start_time_str}'.format(
+                        next_start_time_str=next_start_time_str))
 
 
 @app.task(base=FlowlogTask, bind=True)
 def process_flowlog(self, acc_id, start_time=None):
     with self.lock(acc_id) as lock:
         if not lock:
-            LOG.info("Task for account:{acc_id} already running on another node".format(acc_id=acc_id))
+            LOG.info('Task for account:{acc_id} already running'
+                     ' on another node'.format(acc_id=acc_id))
         else:
-            LOG.info("Collecting flowlog for account:{acc_id}".format(acc_id=acc_id))
+            LOG.info('Collecting flowlog for account:'
+                     '{acc_id}'.format(acc_id=acc_id))
             next_start_time = get_logs(acc_id)
             path = constants.ZK_ACC_PATH.format(acc_id=acc_id)
             node_data = json.dumps({'next_start_time': next_start_time,
                                     'updated_by': socket.gethostname()})
             self.set_value(path, node_data)
-            LOG.info("Collected flowlog for account:{acc_id}".format(acc_id=acc_id))
+            LOG.info("Collected flowlog for account:{acc_id}".format(
+                acc_id=acc_id))
 
 
 @app.on_after_configure.connect
