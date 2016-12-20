@@ -17,9 +17,10 @@ config = ConfigParser.ConfigParser()
 config.read(constants.CONFIG_FILENAME)
 broker_url = config.get('rabbitmq', 'broker_url', 'amqp://rabbit:rabbit@127.0.0.1//')
 periodic_task_interval = int(config.get('task', 'periodic_task_interval', 300))
+zookeeper_hosts = int(config.get('zookeeper', 'hosts', 'localhost:2181'))
 
 app = Celery('tasks', backend='rpc://', broker=broker_url)
-# app.conf.ZOOKEEPER_HOSTS = 'localhost:2181'
+app.conf.ZOOKEEPER_HOSTS = zookeeper_hosts
 
 class FlowlogTask(zkcelery.LockTask):
 
@@ -69,7 +70,7 @@ def parse_node_data(node_data):
                 return ldata
 
 
-def can_run_periodic_task(node_data)
+def can_run_periodic_task(node_data):
     node_data = parse_node_data(node_data)
     if node_data:
         ptask_start_time = node_data.get('next_start_time')
