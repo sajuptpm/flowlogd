@@ -1,3 +1,4 @@
+import datetime
 import json
 import time
 import celery
@@ -62,9 +63,9 @@ def get_next_start_time(node_data):
                 ldata = json.loads(data)
             except Exception as ex:
                 LOG.error(ex)
-                raise ex
+                return None
             if ldata and isinstance(ldata, dict):
-                return ldata.get('end_time')
+                return ldata.get('next_start_time')
 
 
 @app.task(base=FlowlogTask, bind=True)
@@ -73,19 +74,30 @@ def flow_log_periodic_task(self):
         if not lock:
             LOG.info("Periodic task already running on another node")
         else:
+            node_data = self.get_or_create_node(constants.ZK_PTASK_PATH, makepath=True)
+            ptask_start_time = get_next_start_time(node_data)
+            if ptask_start_time:
+                start_time= datetime.datetime.strptime(ptask_start_time, constants.DATETIME_FORMAT)
+                if not start_time >= datetime.datetime.now():
+                    LOG.info("Periodic task already finished by another node, next start time is:{ptask_start_time}".\
+                            format(ptask_start_time=ptask_start_time))
+                    return None
             LOG.info("Submitting tasks to collect flowlog for accounts")
             acc_ids = get_log_enable_account_ids()
             for acc_id in acc_ids:
-                start_time = None
-                path = constants.ZK_FLOWLOG_PATH.format(acc_id=acc_id)
+                path = constants.ZK_ACC_PATH.format(acc_id=acc_id)
                 node_data = self.get_or_create_node(path, makepath=True)
                 start_time = get_next_start_time(node_data)
                 process_flowlog.apply_async(args=[acc_id],
-                                            kwargs={'start_time': start_time})
+                                        kwargs={'start_time': start_time})
                 LOG.info("Submitted task to collect flowlog for account:{acc_id}, start_time:{start_time}".\
                     format(acc_id=acc_id, start_time=start_time))
-            LOG.info("Submitted tasks to collect flowlog for accounts")
-            time.sleep(periodic_task_interval)#To avoid periodic task overlap
+            next_start_time = datetime.datetime.now() + datetime.timedelta(seconds=int(periodic_task_interval))
+            next_start_time_str = next_start_time.strftime(constants.DATETIME_FORMAT)
+            node_data = json.dumps({'next_start_time':next_start_time_str})
+            self.set_value(constants.ZK_PTASK_PATH, node_data)
+            LOG.info("Submitted tasks to collect flowlog for accounts, next start time of periodic task is:{next_start_time_str}".\
+                    format(next_start_time_str=next_start_time_str))
 
 
 @app.task(base=FlowlogTask, bind=True)
@@ -95,9 +107,9 @@ def process_flowlog(self, acc_id, start_time=None):
             LOG.info("Task for account:{acc_id} already running on another node".format(acc_id=acc_id))
         else:
             LOG.info("Collecting flowlog for account:{acc_id}".format(acc_id=acc_id))
-            end_time = get_logs(acc_id)
-            path = constants.ZK_FLOWLOG_PATH.format(acc_id=acc_id)
-            node_data = json.dumps({'end_time':end_time})
+            next_start_time = get_logs(acc_id)
+            path = constants.ZK_ACC_PATH.format(acc_id=acc_id)
+            node_data = json.dumps({'next_start_time':next_start_time})
             self.set_value(path, node_data)
             LOG.info("Collected flowlog for account:{acc_id}".format(acc_id=acc_id))
 

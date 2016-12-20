@@ -33,7 +33,7 @@ def config_section_map(CONFIG, section):
 
 def convert_to_now(time):
     current_time= datetime.datetime.now()
-    t_time= datetime.datetime.strptime(time, '%d-%m-%Y %H:%M:%S')
+    t_time= datetime.datetime.strptime(time, constants.DATETIME_FORMAT)
     '''
     # this code for converting IST to UCT
     local = pytz.timezone ("Asia/Kolkata")
@@ -81,15 +81,17 @@ def get_log_in_time(start_time,end_time,directory,file_name,account_id,dirn,vn):
     CONFIG = ConfigParser.ConfigParser()
     CONFIG.read(constants.CONFIG_FILENAME)
     logs = config_section_map(CONFIG, 'logs')
-    s_t = datetime.datetime.strptime(start_time, '%d-%m-%Y %H:%M:%S')
-    e_t = datetime.datetime.strptime(end_time, '%d-%m-%Y %H:%M:%S')
+    s_t = datetime.datetime.strptime(start_time, constants.DATETIME_FORMAT)
+    e_t = datetime.datetime.strptime(end_time, constants.DATETIME_FORMAT)
     temp = s_t
     while True:
         temp1=temp
         temp = temp + datetime.timedelta(seconds = int(logs['time_delta']))
         total_seconds = (e_t - temp).total_seconds()
 	LOG.info('query logs for start_time: %s end_time: %s direction: %s' % (temp1,temp,dirn))
-        if write_log_to_file(convert_to_now(temp1.strftime('%d-%m-%Y %H:%M:%S')),convert_to_now(temp.strftime('%d-%m-%Y %H:%M:%S')),directory,file_name,account_id,0,vn,logs):
+        if write_log_to_file(convert_to_now(temp1.strftime(constants.DATETIME_FORMAT)),
+                        convert_to_now(temp.strftime(constants.DATETIME_FORMAT)),
+                        directory,file_name,account_id,0,vn,logs):
             if total_seconds > 1:
                 with open(directory+'/'+file_name, 'a') as outfile:
                     outfile.write(',')

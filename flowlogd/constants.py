@@ -1,3 +1,5 @@
 CONFIG_FILENAME = '/etc/flowlogd/flowlogd.cfg'
 LOG_FILENAME = '/var/log/flowlogd/flowlog.log'
-ZK_FLOWLOG_PATH = '/flowlog/accounts/{acc_id}'
+ZK_ACC_PATH = '/flowlog/accounts/{acc_id}'
+ZK_PTASK_PATH = '/flowlog/periodictask'
+DATETIME_FORMAT = '%d-%m-%Y %H:%M:%S'

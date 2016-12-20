@@ -96,13 +96,13 @@ def get_logs(account_id,start_time=None):
         end_time= datetime.datetime.now()
     	start_time= end_time - datetime.timedelta(seconds = int(time_interval))
     else:
-    	start_time= datetime.datetime.strptime(start_time,'%d-%m-%Y %H:%M:%S')
-    	end_time= start_time + datetime.timedelta(seconds = int(time_interval))
+        start_time= datetime.datetime.strptime(start_time, constants.DATETIME_FORMAT)
+        end_time= start_time + datetime.timedelta(seconds = int(time_interval))
     base_directory= 'vpc-flow-log-'+account_id[20:]
     directory = '/tmp/'+ base_directory
-    file_name= base_directory+'-'+start_time.strftime('%d_%m_%Y-%H_%M')
-    start_time= start_time.strftime('%d-%m-%Y %H:%M:%S')
-    end_time= end_time.strftime('%d-%m-%Y %H:%M:%S')
+    file_name= base_directory+'-'+start_time.strftime(constants.DATETIME_FORMAT)
+    start_time= start_time.strftime(constants.DATETIME_FORMAT)
+    end_time= end_time.strftime(constants.DATETIME_FORMAT)
 
     LOG.info('account id: %s start_time: %s end_time: %s' % (account_id,start_time,end_time))
     if not os.path.exists(directory):
