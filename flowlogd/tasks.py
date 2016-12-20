@@ -1,5 +1,6 @@
 import datetime
 import json
+import socket
 import time
 import celery
 from celery import Celery
@@ -18,7 +19,7 @@ broker_url = config.get('rabbitmq', 'broker_url', 'amqp://rabbit:rabbit@127.0.0.
 periodic_task_interval = int(config.get('task', 'periodic_task_interval', 300))
 
 app = Celery('tasks', backend='rpc://', broker=broker_url)
-
+# app.conf.ZOOKEEPER_HOSTS = 'localhost:2181'
 
 class FlowlogTask(zkcelery.LockTask):
 
@@ -94,7 +95,8 @@ def flow_log_periodic_task(self):
                     format(acc_id=acc_id, start_time=start_time))
             next_start_time = datetime.datetime.now() + datetime.timedelta(seconds=int(periodic_task_interval))
             next_start_time_str = next_start_time.strftime(constants.DATETIME_FORMAT)
-            node_data = json.dumps({'next_start_time':next_start_time_str})
+            node_data = json.dumps({'next_start_time':next_start_time_str,
+                                    'updated_by':socket.gethostname()})
             self.set_value(constants.ZK_PTASK_PATH, node_data)
             LOG.info("Submitted tasks to collect flowlog for accounts, next start time of periodic task is:{next_start_time_str}".\
                     format(next_start_time_str=next_start_time_str))
@@ -109,7 +111,8 @@ def process_flowlog(self, acc_id, start_time=None):
             LOG.info("Collecting flowlog for account:{acc_id}".format(acc_id=acc_id))
             next_start_time = get_logs(acc_id)
             path = constants.ZK_ACC_PATH.format(acc_id=acc_id)
-            node_data = json.dumps({'next_start_time':next_start_time})
+            node_data = json.dumps({'next_start_time':next_start_time,
+                                    'updated_by':socket.gethostname()})
             self.set_value(path, node_data)
             LOG.info("Collected flowlog for account:{acc_id}".format(acc_id=acc_id))
 
