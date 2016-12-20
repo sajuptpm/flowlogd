@@ -78,8 +78,9 @@ def can_run_periodic_task(node_data):
             start_time = datetime.strptime(ptask_start_time,
                                            constants.DATETIME_FORMAT)
             if not datetime.now() >= start_time:
-                LOG.info('Periodic task already finished by node:{updated_by},'
-                         'next start time is:{ptask_start_time}'.format(
+                LOG.info('Periodic task already processed by node:'
+                         '{updated_by}, next trigger is schedule on:'
+                         '{ptask_start_time}'.format(
                             updated_by=updated_by,
                             ptask_start_time=ptask_start_time))
                 return False
@@ -125,8 +126,8 @@ def flow_log_periodic_task(self):
                                     'updated_by': socket.gethostname()})
             self.set_value(constants.ZK_PTASK_PATH, node_data)
             LOG.info('Submitted tasks to collect flowlog for accounts,'
-                     ' next start time of periodic'
-                     ' task is:{next_start_time_str}'.format(
+                     ' Periodic task will run again on:'
+                     '{next_start_time_str}'.format(
                         next_start_time_str=next_start_time_str))
 
 
