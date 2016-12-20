@@ -139,14 +139,17 @@ def process_flowlog(self, acc_id, start_time=None):
                      ' on another node'.format(acc_id=acc_id))
         else:
             LOG.info('Collecting flowlog for account:'
-                     '{acc_id}'.format(acc_id=acc_id))
-            next_start_time = get_logs(acc_id)
+                     '{acc_id}, from:{from_time}'.format(
+                        acc_id=acc_id, from_time=start_time))
+            next_start_time = get_logs(acc_id, start_time=start_time)
             path = constants.ZK_ACC_PATH.format(acc_id=acc_id)
             node_data = json.dumps({'next_start_time': next_start_time,
                                     'updated_by': socket.gethostname()})
             self.set_value(path, node_data)
-            LOG.info("Collected flowlog for account:{acc_id}".format(
-                acc_id=acc_id))
+            LOG.info('Collected flowlog for account:{acc_id}, '
+                     'from:{from_time} to:{to_time}'.format(
+                        acc_id=acc_id, from_time=start_time,
+                        to_time=next_start_time))
 
 
 @app.on_after_configure.connect
