@@ -79,7 +79,7 @@ def can_run_periodic_task(node_data):
                                            constants.DATETIME_FORMAT)
             if not datetime.now() >= start_time:
                 LOG.info('Periodic task already processed by node:'
-                         '{updated_by}, next trigger is schedule on:'
+                         '{updated_by}, next trigger is scheduled on:'
                          '{ptask_start_time}'.format(
                             updated_by=updated_by,
                             ptask_start_time=ptask_start_time))
