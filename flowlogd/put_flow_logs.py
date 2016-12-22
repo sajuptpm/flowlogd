@@ -98,7 +98,7 @@ def get_logs(account_id,start_time=None):
     else:
         start_time= datetime.datetime.strptime(start_time, constants.DATETIME_FORMAT)
         end_time= start_time + datetime.timedelta(seconds = int(time_interval))
-    base_directory= 'vpc-flow-log-'+account_id[20:]
+    base_directory= 'vpc-flow-logs-'+account_id[20:]
     directory = '/tmp/'+ base_directory
     file_name= base_directory+'-'+start_time.strftime(constants.DATETIME_FORMAT)
     start_time= start_time.strftime(constants.DATETIME_FORMAT)
@@ -122,7 +122,7 @@ def get_logs(account_id,start_time=None):
     # create bucket and cross account policy
     write_to_dss(account_id,directory,base_directory,file_name)
     os.remove(directory+'/'+file_name)
-    LOG.info('Successfully wrinten logs for account_id: %s start_time: %s and end_time: %s' % (account_id,start_time,end_time))
+    LOG.info('Successfully written logs for account_id: %s start_time: %s and end_time: %s' % (account_id,start_time,end_time))
     return end_time
 
 def get_log_enable_account_ids():
