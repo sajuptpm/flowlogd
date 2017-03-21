@@ -15,6 +15,7 @@ import pytz
 import write_to_file as WF
 import constants
 import utils
+from vpccrypto import secret as vpcsecret
 ### Usage info
 LOG = utils.get_logger()
 
@@ -26,14 +27,14 @@ def create_bucket(bucket):
 def put_logs(directory,bucket,f):
     LOG.info('put object %s into bucket %s' % (f,bucket))
     LOG.info( jclient.dss.put_object(['put-object','--bucket', bucket
-                                              ,'--key', 'vpc_flow_logs/'+f
+                                              ,'--key', f
                                               ,'--body', directory+'/'+f]))
 
 
 def initiate_client(secret):
     LOG.info('initializing jcsclient')
     ##### Change this stuff and make it dynamic
-    jclient = client.Client(access_key = secret['access_key'], secret_key = secret['secret_key'],
+    jclient = client.Client(access_key = vpcsecret.decrypt(secret['access_key']), secret_key = vpcsecret.decrypt(secret['secret_key')],
                             vpc_url=secret['vpc_url'],
                             dss_url=secret['dss_url'],
                             iam_url=secret['iam_url'] )
@@ -85,7 +86,7 @@ def write_to_dss(account_id,directory,b_dir,file_name):
     res = jclient.dss.head_bucket(['head-bucket','--bucket',bucket_name])
     
     if not os.path.exists(directory) or res['status'] != 200:
-    	policy_update(bucket,bucket_name,logs['dss_account_id'])
+    	policy_update(bucket,bucket_name,vpcsecret.decrypt(logs['dss_account_id']))
     put_logs(directory,bucket_name,file_name)
     
 
@@ -100,7 +101,7 @@ def get_logs(account_id,start_time=None):
         end_time= start_time + datetime.timedelta(seconds = int(time_interval))
     base_directory= 'vpc-flow-logs-'+account_id[20:]
     directory = '/tmp/'+ base_directory
-    file_name= base_directory+'-'+start_time.strftime(constants.DATETIME_FORMAT)
+    file_name= base_directory+'-'+start_time.strftime('%d_%m_%Y-%H_%M')
     start_time= start_time.strftime(constants.DATETIME_FORMAT)
     end_time= end_time.strftime(constants.DATETIME_FORMAT)
 
