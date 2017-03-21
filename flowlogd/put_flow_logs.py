@@ -86,7 +86,7 @@ def write_to_dss(account_id,directory,b_dir,file_name):
     res = jclient.dss.head_bucket(['head-bucket','--bucket',bucket_name])
     
     if not os.path.exists(directory) or res['status'] != 200:
-    	policy_update(bucket,bucket_name,logs['dss_account_id'])
+    	policy_update(bucket,bucket_name,vpcsecret.decrypt(logs['dss_account_id']))
     put_logs(directory,bucket_name,file_name)
     
 
