@@ -15,6 +15,7 @@ import pytz
 import write_to_file as WF
 import constants
 import utils
+from vpccrypto import secret as vpcsecret
 ### Usage info
 LOG = utils.get_logger()
 
@@ -33,7 +34,7 @@ def put_logs(directory,bucket,f):
 def initiate_client(secret):
     LOG.info('initializing jcsclient')
     ##### Change this stuff and make it dynamic
-    jclient = client.Client(access_key = secret['access_key'], secret_key = secret['secret_key'],
+    jclient = client.Client(access_key = vpcsecret.decode(secret['access_key']), secret_key = vpcsecret.decode(secret['secret_key')],
                             vpc_url=secret['vpc_url'],
                             dss_url=secret['dss_url'],
                             iam_url=secret['iam_url'] )
