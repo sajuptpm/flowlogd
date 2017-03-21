@@ -26,7 +26,7 @@ def create_bucket(bucket):
 def put_logs(directory,bucket,f):
     LOG.info('put object %s into bucket %s' % (f,bucket))
     LOG.info( jclient.dss.put_object(['put-object','--bucket', bucket
-                                              ,'--key', 'vpc_flow_logs/'+f
+                                              ,'--key', f
                                               ,'--body', directory+'/'+f]))
 
 
@@ -100,7 +100,7 @@ def get_logs(account_id,start_time=None):
         end_time= start_time + datetime.timedelta(seconds = int(time_interval))
     base_directory= 'vpc-flow-logs-'+account_id[20:]
     directory = '/tmp/'+ base_directory
-    file_name= base_directory+'-'+start_time.strftime(constants.DATETIME_FORMAT)
+    file_name= base_directory+'-'+start_time.strftime('%d_%m_%Y-%H_%M')
     start_time= start_time.strftime(constants.DATETIME_FORMAT)
     end_time= end_time.strftime(constants.DATETIME_FORMAT)
 
