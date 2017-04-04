@@ -89,19 +89,32 @@ def can_run_periodic_task(node_data):
                 return False
     return True
 
-def check_delta(data, parse=False):
+def check_delta(data, acc_data, parse=False):
     if parse:
         data = parse_node_data(data)
-    delta = False
     if data:
-        start_time = data.get('next_start_time')
-        if start_time:
-            start_time = datetime.strptime(start_time,
+        start_time_str = data.get('next_start_time')
+        enabled_at_str = acc_data['enabledAt']
+        acc_id = acc_data['projectId']
+        if start_time_str:
+            start_time = datetime.strptime(start_time_str,
                                            constants.DATETIME_FORMAT)
+            if enabled_at_str:
+                enabled_at = datetime.strptime(enabled_at_str,
+                                               constants.DATETIME_FORMAT)
+                if start_time < enabled_at:
+                    #we don't have to run delta correction taks when
+                    #user disable flowlog for a while and enable it again.
+                    LOG.info('Flowlog re-enabled for account:{acc_id} at {enabled_at}, '
+                             'last saved start_time: {start_time} '
+                             'Dont need to run delta correction tasks for this account.'
+                             ''.format(start_time=start_time_str, enabled_at=enabled_at_str, acc_id=acc_id))
+                    data['next_start_time'] = None
+                    return False
             if start_time < (datetime.now() - timedelta(
                         seconds=2*int(flowlog_time_interval))):
-                delta = True
-    return delta
+                return True
+    return False
 
 def check_overflow(data, parse=False):
     if parse:
@@ -121,7 +134,7 @@ def check_overflow(data, parse=False):
                 return True
     return False
 
-def correct_delta(acc_id, data):
+def correct_delta(acc_id, acc_data, data):
     start_time = updated_by = None
     if data:
         start_time = data.get('next_start_time')
@@ -142,16 +155,16 @@ def correct_delta(acc_id, data):
                         acc_id=acc_id, start_time=start_time_str,
                         time_delta_sec=time_delta_sec, tasks_count=tasks_count))
             if tasks_count:
-                _tasks = [process_flowlog.s(start_time_str, acc_id)]
-                _tasks.extend([process_flowlog.s(acc_id) for x in range(1, tasks_count)])
+                _tasks = [process_flowlog.s(start_time_str, acc_data, acc_id)]
+                _tasks.extend([process_flowlog.s(acc_data, acc_id) for x in range(1, tasks_count)])
                 chain(tuple(_tasks)).delay()
 
-def submit_process_flowlog_task(acc_id, data):
+def submit_process_flowlog_task(acc_id, acc_data, data):
     start_time = updated_by = None
     if data:
         start_time = data.get('next_start_time')
         updated_by = data.get('updated_by')
-    process_flowlog.apply_async(args=[start_time, acc_id])
+    process_flowlog.apply_async(args=[start_time, acc_data, acc_id])
     LOG.info('Submitted task to collect flowlog for account:{acc_id},'
              ' start_time:{start_time},'
              ' last updated by node:{updated_by}'.format(
@@ -170,20 +183,26 @@ def flow_log_periodic_task(self):
                                                 makepath=True)
             if not can_run_periodic_task(node_data):
                 return None
+            accounts = get_log_enable_account_ids()
+            if not accounts:
+                LOG.info("Could not find flowlog enabled accounts")
+                return None
             LOG.info("Submitting tasks to collect flowlog for accounts")
-            acc_ids = get_log_enable_account_ids()
-            for acc_id in acc_ids:
+            if isinstance(accounts, dict):
+                accounts = [accounts]
+            for acc in accounts:
+                acc_id = acc['projectId']
                 path = constants.ZK_ACC_PATH.format(acc_id=acc_id)
                 node_data = self.get_or_create_node(path, makepath=True)
                 data = parse_node_data(node_data)
-                if check_delta(data):
-                    correct_delta(acc_id, data)
+                if check_delta(data, acc):
+                    correct_delta(acc_id, acc, data)
                 else:
                     if check_overflow(data):
                         LOG.info('Detected overflow for account:{acc_id}'
                                  ''.format(acc_id=acc_id))
                     else:
-                        submit_process_flowlog_task(acc_id, data)
+                        submit_process_flowlog_task(acc_id, acc, data)
             next_start_time = pt_start_time + timedelta(
                                 seconds=int(periodic_task_interval))
             next_start_time_str = next_start_time.strftime(
@@ -197,7 +216,7 @@ def flow_log_periodic_task(self):
                         next_start_time_str=next_start_time_str))
 
 @app.task(base=FlowlogTask, bind=True)
-def process_flowlog(self, start_time, acc_id):
+def process_flowlog(self, start_time, acc_data, acc_id):
     with self.lock(acc_id) as lock:
         if not lock:
             LOG.info('Task for account:{acc_id} already running'
@@ -206,7 +225,8 @@ def process_flowlog(self, start_time, acc_id):
             LOG.info('Collecting flowlog for account:'
                      '{acc_id}, from:{from_time}'.format(
                         acc_id=acc_id, from_time=start_time))
-            next_start_time = get_logs(acc_id, start_time=start_time)
+            bucket_name = acc_data['bucketName']
+            next_start_time = get_logs(acc_id, bucket_name, start_time=start_time)
             path = constants.ZK_ACC_PATH.format(acc_id=acc_id)
             node_data = json.dumps({'next_start_time': next_start_time,
                                     'updated_by': socket.gethostname()})
