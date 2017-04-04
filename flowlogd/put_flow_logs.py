@@ -90,7 +90,7 @@ def write_to_dss(account_id,directory,b_dir,file_name):
     put_logs(directory,bucket_name,file_name)
     
 
-def get_logs(account_id,start_time=None):
+def get_logs(account_id, bucket_name, start_time=None):
     time_interval = logs['time_interval']
     
     if start_time is None:
@@ -99,7 +99,7 @@ def get_logs(account_id,start_time=None):
     else:
         start_time= datetime.datetime.strptime(start_time, constants.DATETIME_FORMAT)
         end_time= start_time + datetime.timedelta(seconds = int(time_interval))
-    base_directory= 'vpc-flow-logs-'+account_id[20:]
+    base_directory = bucket_name
     directory = '/tmp/'+ base_directory
     file_name= base_directory+'-'+start_time.strftime('%d_%m_%Y-%H_%M')
     start_time= start_time.strftime(constants.DATETIME_FORMAT)
