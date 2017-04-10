@@ -130,3 +130,20 @@ def get_log_enable_account_ids():
 
     res = jclient.vpc.describe_flow_log_enable_accounts('describe-flow-log-enable-accounts')
     return res['DescribeFlowLogEnableAccountsResponse']['accountIds']['item']
+
+def delete_flows_objects(bucket_name):
+    LOG.info('Deleting for %s logs older than 7 Days' % bucket_name)
+    count=0
+    obs = jclient.dss.list_objects(['list-objects','--bucket',bucket_name])
+    if obs['status'] != 200 :
+        LOG.info('Bucket not created yet')
+        return
+    for ob in obs['ListBucketResult']['Contents']:
+        if ob is None:
+            LOG.info('No objects found for bucket %s' % bucket_name)
+            return
+        cdate = datetime.datetime.strptime(ob['Key'][27:],"%d_%m_%Y-%H_%M")
+        if cdate <= datetime.datetime.now() - datetime.timedelta(days=10):
+            jclient.dss.delete_object(['delete-object','--bucket',bucket_name,'--key',ob['Key']])
+            count=count+1
+    LOG.info("number of objects deleted from bucket %s = %s" % (bucket_name, count))
