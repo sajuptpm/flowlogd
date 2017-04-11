@@ -143,7 +143,7 @@ def delete_flows_objects(bucket_name):
             LOG.info('No objects found for bucket %s' % bucket_name)
             return
         cdate = datetime.datetime.strptime(ob['Key'][27:],"%d_%m_%Y-%H_%M")
-        if cdate <= datetime.datetime.now() - datetime.timedelta(days=10):
+        if cdate <= datetime.datetime.now() - datetime.timedelta(days=7):
             jclient.dss.delete_object(['delete-object','--bucket',bucket_name,'--key',ob['Key']])
             count=count+1
     LOG.info("number of objects deleted from bucket %s = %s" % (bucket_name, count))
