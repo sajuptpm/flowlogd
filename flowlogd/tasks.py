@@ -8,7 +8,7 @@ import zkcelery
 import ConfigParser
 import utils
 import constants
-from put_flow_logs import get_logs, get_log_enable_account_ids
+from put_flow_logs import get_logs, get_log_enable_account_ids, delete_flows_objects
 
 LOG = utils.get_logger()
 config = ConfigParser.ConfigParser()
@@ -16,6 +16,7 @@ config.read(constants.CONFIG_FILENAME)
 broker_url = config.get('rabbitmq', 'broker_url',
                         'amqp://rabbit:rabbit@127.0.0.1//')
 periodic_task_interval = int(config.get('task', 'periodic_task_interval', 3600))
+periodic_purge_task_interval = int(config.get('task', 'periodic_purge_task_interval', 86400))
 flowlog_time_interval = int(config.get('logs', 'time_interval', 3600))
 delta_correction_tasks_count = int(config.get('task', 'delta_correction_tasks_count', 12))
 zookeeper_hosts = config.get('zookeeper', 'hosts', 'localhost:2181')
@@ -72,7 +73,7 @@ def parse_node_data(node_data):
             if ldata and isinstance(ldata, dict):
                 return ldata
 
-def can_run_periodic_task(node_data):
+def can_run_periodic_task(node_data, task_name=""):
     data = parse_node_data(node_data)
     if data:
         ptask_start_time = data.get('next_start_time')
@@ -81,13 +82,22 @@ def can_run_periodic_task(node_data):
             start_time = datetime.strptime(ptask_start_time,
                                            constants.DATETIME_FORMAT)
             if not datetime.now() >= start_time:
-                LOG.info('Periodic task already processed by node:'
+                LOG.info('Periodic {task_name} task already processed by node:'
                          '{updated_by}, next trigger is scheduled on:'
                          '{ptask_start_time}'.format(
+                            task_name=task_name,
                             updated_by=updated_by,
                             ptask_start_time=ptask_start_time))
                 return False
     return True
+
+def can_run_periodic_purge_task(node_data):
+    task_name = "Flowlog Purge"
+    return can_run_periodic_task(node_data, task_name=task_name)
+
+def can_run_periodic_collect_task(node_data):
+    task_name = "Flowlog Collect"
+    return can_run_periodic_task(node_data, task_name=task_name)
 
 def check_delta(data, acc_data, parse=False):
     if parse:
@@ -174,14 +184,13 @@ def submit_process_flowlog_task(acc_id, acc_data, data):
 @app.task(base=FlowlogTask, bind=True)
 def flow_log_periodic_task(self):
     pt_start_time = datetime.now() - timedelta(seconds=10)
-    acc_task_next_start_time = None
     with self.lock() as lock:
         if not lock:
             LOG.info("Periodic task already running on another node")
         else:
             node_data = self.get_or_create_node(constants.ZK_PTASK_PATH,
                                                 makepath=True)
-            if not can_run_periodic_task(node_data):
+            if not can_run_periodic_collect_task(node_data):
                 return None
             accounts = get_log_enable_account_ids()
             if not accounts:
@@ -237,7 +246,53 @@ def process_flowlog(self, start_time, acc_data, acc_id):
                         to_time=next_start_time))
             return next_start_time
 
+@app.task(base=FlowlogTask, bind=True)
+def flow_log_periodic_purge_task(self):
+    pt_start_time = datetime.now() - timedelta(seconds=10)
+    with self.lock() as lock:
+        if not lock:
+            LOG.info("Periodic Purge task already running on another node")
+        else:
+            node_data = self.get_or_create_node(constants.ZK_PURGE_PTASK_PATH,
+                                                makepath=True)
+            if not can_run_periodic_purge_task(node_data):
+                return None
+            accounts = get_log_enable_account_ids()
+            if not accounts:
+                LOG.info("Could not find flowlog enabled accounts")
+                return None
+            LOG.info("Submitting tasks to purge flowlog for accounts")
+            if isinstance(accounts, dict):
+                accounts = [accounts]
+            for acc in accounts:
+                acc_id = acc['projectId']
+                purge_flowlog.apply_async(args=[acc])
+                LOG.info('Submitted task to purge flowlog for account:{acc_id}'.format(acc_id=acc_id))
+            next_start_time = pt_start_time + timedelta(
+                                seconds=int(periodic_purge_task_interval))
+            next_start_time_str = next_start_time.strftime(
+                                    constants.DATETIME_FORMAT)
+            node_data = json.dumps({'next_start_time': next_start_time_str,
+                                    'updated_by': socket.gethostname()})
+            self.set_value(constants.ZK_PURGE_PTASK_PATH, node_data)
+            LOG.info('Submitted tasks to purge flowlog for accounts,'
+                     ' Periodic purge task will run again on:'
+                     '{next_start_time_str}'.format(
+                        next_start_time_str=next_start_time_str))
+
+@app.task(base=FlowlogTask, bind=True)
+def purge_flowlog(self, acc):
+    acc_id = acc['projectId']
+    LOG.info('Purging flowlog for account:{acc_id}'.format(acc_id=acc_id))
+    delete_flows_objects(acc)
+    LOG.info('Purged flowlog for account:{acc_id}'.format(acc_id=acc_id))
+
 @app.on_after_configure.connect
 def setup_periodic_tasks(sender, **kwargs):
     sender.add_periodic_task(periodic_task_interval,
                              flow_log_periodic_task.s())
+
+@app.on_after_configure.connect
+def setup_periodic_purge_tasks(sender, **kwargs):
+    sender.add_periodic_task(periodic_purge_task_interval,
+                             flow_log_periodic_purge_task.s())
