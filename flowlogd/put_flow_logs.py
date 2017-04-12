@@ -46,6 +46,7 @@ CONFIG = ConfigParser.ConfigParser()
 CONFIG.read(constants.CONFIG_FILENAME)
 secret = WF.config_section_map(CONFIG, 'secret')
 logs = WF.config_section_map(CONFIG, 'logs')
+periodic_purge_task_interval = int(CONFIG.get('task', 'periodic_purge_task_interval', 5004000))
 jclient = initiate_client(secret)
 
 #creating bucket and cross account policy 
@@ -131,19 +132,24 @@ def get_log_enable_account_ids():
     res = jclient.vpc.describe_flow_log_enable_accounts('describe-flow-log-enable-accounts')
     return res['DescribeFlowLogEnableAccountsResponse']['accountIds']['item']
 
-def delete_flows_objects(bucket_name):
-    LOG.info('Deleting for %s logs older than 7 Days' % bucket_name)
+def delete_flows_objects(account_data):
+    bucket_name = account_data['bucket_name']
+    LOG.info('Deleting logs for account_id: %s and bucket: %s which is older than 7 Days' % ( account_data['account_id'],bucket_name))
     count=0
     obs = jclient.dss.list_objects(['list-objects','--bucket',bucket_name])
     if obs['status'] != 200 :
         LOG.info('Bucket not created yet')
         return
-    for ob in obs['ListBucketResult']['Contents']:
-        if ob is None:
-            LOG.info('No objects found for bucket %s' % bucket_name)
-            return
-        cdate = datetime.datetime.strptime(ob['Key'][27:],"%d_%m_%Y-%H_%M")
-        if cdate <= datetime.datetime.now() - datetime.timedelta(days=7):
-            jclient.dss.delete_object(['delete-object','--bucket',bucket_name,'--key',ob['Key']])
-            count=count+1
+    if 'Contents' in obs['ListBucketResult']:
+        obs = obs['ListBucketResult']['Contents']
+        if isinstance(obs, dict):
+            obs = [obs['ListBucketResult']['Contents']]
+    	for ob in obs:
+            if ob is None:
+                LOG.info('No objects found for bucket %s' % bucket_name)
+                return
+            cdate = datetime.datetime.strptime(ob['Key'][-16:],"%d_%m_%Y-%H_%M")
+            if cdate <= datetime.datetime.now() - datetime.timedelta(seconds=periodic_purge_task_interval):
+                jclient.dss.delete_object(['delete-object','--bucket',bucket_name,'--key',ob['Key']])
+                count=count+1
     LOG.info("number of objects deleted from bucket %s = %s" % (bucket_name, count))
