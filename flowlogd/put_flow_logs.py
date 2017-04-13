@@ -46,7 +46,7 @@ CONFIG = ConfigParser.ConfigParser()
 CONFIG.read(constants.CONFIG_FILENAME)
 secret = WF.config_section_map(CONFIG, 'secret')
 logs = WF.config_section_map(CONFIG, 'logs')
-periodic_purge_task_interval = int(CONFIG.get('task', 'periodic_purge_task_interval', 5004000))
+flowlog_purge_days = int(CONFIG.get('task', 'flowlog_purge_days', 5004000))
 jclient = initiate_client(secret)
 
 #creating bucket and cross account policy 
@@ -149,7 +149,7 @@ def delete_flows_objects(account_data):
                 LOG.info('No objects found for bucket %s' % bucket_name)
                 return
             cdate = datetime.datetime.strptime(ob['Key'][-16:],"%d_%m_%Y-%H_%M")
-            if cdate <= datetime.datetime.now() - datetime.timedelta(seconds=periodic_purge_task_interval):
+            if cdate <= datetime.datetime.now() - datetime.timedelta(days=flowlog_purge_days):
                 jclient.dss.delete_object(['delete-object','--bucket',bucket_name,'--key',ob['Key']])
                 count=count+1
     LOG.info("number of objects deleted from bucket %s = %s" % (bucket_name, count))
