@@ -46,7 +46,7 @@ CONFIG = ConfigParser.ConfigParser()
 CONFIG.read(constants.CONFIG_FILENAME)
 secret = WF.config_section_map(CONFIG, 'secret')
 logs = WF.config_section_map(CONFIG, 'logs')
-flowlog_purge_days = int(CONFIG.get('task', 'flowlog_purge_days', 5004000))
+flowlog_purge_days = int(CONFIG.get('task', 'flowlog_purge_days', 7))
 jclient = initiate_client(secret)
 
 #creating bucket and cross account policy 
@@ -133,8 +133,10 @@ def get_log_enable_account_ids():
     return res['DescribeFlowLogEnableAccountsResponse']['accountIds']['item']
 
 def delete_flows_objects(account_data):
-    bucket_name = account_data['bucket_name']
-    LOG.info('Deleting logs for account_id: %s and bucket: %s which is older than 7 Days' % ( account_data['account_id'],bucket_name))
+    bucket_name = account_data['bucketName']
+    account_id = account_data['projectId']
+    LOG.info('Deleting logs older than {days} Days, from bucket:{bucket_name}, account:{account_id}'
+             ''.format(days=flowlog_purge_days, bucket_name=bucket_name, account_id=account_id))
     count=0
     obs = jclient.dss.list_objects(['list-objects','--bucket',bucket_name])
     if obs['status'] != 200 :
@@ -152,4 +154,5 @@ def delete_flows_objects(account_data):
             if cdate <= datetime.datetime.now() - datetime.timedelta(days=flowlog_purge_days):
                 jclient.dss.delete_object(['delete-object','--bucket',bucket_name,'--key',ob['Key']])
                 count=count+1
-    LOG.info("number of objects deleted from bucket %s = %s" % (bucket_name, count))
+    LOG.info('Deleted {count} logs from bucket:{bucket_name}, account:{account_id}'
+             ''.format(count=count, bucket_name=bucket_name, account_id=account_id))
